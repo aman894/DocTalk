@@ -35,52 +35,9 @@ public class Home extends AppCompatActivity implements FragmentDrawer.FragmentDr
         drawerFragment.setUp(R.id.fragment_navigation_drawer, (DrawerLayout) findViewById(R.id.drawer_layout), mToolbar);
         drawerFragment.setDrawerListener(this);
 
-        //setUpDialog();
-    }
+        }
 
-    private void setUpDialog() {
-        fileBrowserDialog = new AlertDialog.Builder(this);
-        fileBrowserDialog.setTitle("Documents");
-        final ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.select_dialog_singlechoice);
-        adapter.add("File 1");
-        adapter.add("File 2");
-        adapter.add("File 3");
-        adapter.add("File 4");
-        adapter.add("File 5");
-        adapter.add("File 6");
-        adapter.add("File 7");
-        adapter.add("File 8");
-        adapter.add("File 9");
-        adapter.add("File 0");
 
-    fileBrowserDialog.setNegativeButton("Cancel",
-            new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int position) {
-                    dialog.dismiss();
-                }
-            }
-    );
-
-        fileBrowserDialog.setAdapter(adapter,
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int position) {
-                        String str = adapter.getItem(position);
-                        AlertDialog.Builder inner = new AlertDialog.Builder(Home.this);
-                        inner.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        });
-                        inner.show();
-                    }
-                });
-    }
-
-    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_home, menu);
