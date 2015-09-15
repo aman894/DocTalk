@@ -17,11 +17,22 @@ import java.util.ArrayList;
 
 public class FileBrowser extends ListActivity {
     ArrayList<String> listItems;
+    String rootPath1 = "/storage/emulated/0";
+    String rootPath2 = "/storage/sdcard1";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_file_browser);
-        getFiles(new File("/").listFiles());
+        setRoot();
+    }
+
+    private void setRoot() {
+        listItems = new ArrayList<String>();
+        listItems.add("..");
+        listItems.add(rootPath1);
+        listItems.add(rootPath2);
+        ArrayAdapter<String> fileList = new ArrayAdapter<String>(this,R.layout.file_list_row, listItems);
+        setListAdapter(fileList);
     }
 
 
@@ -32,7 +43,8 @@ public class FileBrowser extends ListActivity {
             // String state = Environment.getExternalStorageDirectory();
             String path=file.getPath();
             if((path.contains("storage"))&&(!path.contains("usbdisk")))
-            listItems.add(file.getPath());
+                listItems.add(file.getPath());
+
         }
         ArrayAdapter<String> fileList = new ArrayAdapter<String>(this,R.layout.file_list_row, listItems);
         setListAdapter(fileList);
@@ -63,7 +75,8 @@ public class FileBrowser extends ListActivity {
     protected void onListItemClick(ListView l, View v, int position, long id){
         int selectedRow = (int)id;
         if(selectedRow == 0){
-            getFiles(new File("/").listFiles());
+            //getFiles(new File("/storage").listFiles());
+            setRoot();
         }else{
             File file = new File(listItems.get(selectedRow));
             if(file.isDirectory()){
