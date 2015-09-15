@@ -3,6 +3,7 @@ package com.aman.doctalk;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
+import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -28,6 +29,9 @@ public class FileBrowser extends ListActivity {
         listItems = new ArrayList<String>();
         listItems.add("..");
         for(File file : files){
+            // String state = Environment.getExternalStorageDirectory();
+            String path=file.getPath();
+            if((path.contains("storage"))&&(!path.contains("usbdisk")))
             listItems.add(file.getPath());
         }
         ArrayAdapter<String> fileList = new ArrayAdapter<String>(this,R.layout.file_list_row, listItems);
