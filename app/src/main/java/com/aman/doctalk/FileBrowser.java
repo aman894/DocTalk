@@ -2,23 +2,30 @@ package com.aman.doctalk;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.app.Notification;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import com.artifex.mupdfdemo.MuPDFActivity;
+
 import java.io.File;
 import java.util.ArrayList;
 
 public class FileBrowser extends ListActivity {
     ArrayList<String> listItems;
-    String rootPath1 = "/storage/emulated/0";
-    String rootPath2 = "/storage/sdcard1";
+    String ROOT_PATH1 = "/storage/emulated/0";
+    String ROOT_PATH2 = "/storage/sdcard1";
+    String parent="";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -28,17 +35,51 @@ public class FileBrowser extends ListActivity {
 
     private void setRoot() {
         listItems = new ArrayList<String>();
-        listItems.add("..");
-        listItems.add(rootPath1);
-        listItems.add(rootPath2);
+        listItems.add("<-BACK");
+        listItems.add(ROOT_PATH1);
+        listItems.add(ROOT_PATH2);
         ArrayAdapter<String> fileList = new ArrayAdapter<String>(this,R.layout.file_list_row, listItems);
         setListAdapter(fileList);
     }
+    //on clicking any item in the dialog
+    @Override
+    protected void onListItemClick(ListView l, View v, int position, long id){
+        int selectedRow = (int)id;
 
+        if(selectedRow == 0){
+            setRoot();
+        }else{
+            File file = new File(listItems.get(selectedRow));
+            if(file.isDirectory()){
+                getFiles(file.listFiles());
+            }else{
+                //opening  pdf files
+                if(file.getPath().matches(".*?\\.pdf")){
+                    Uri filePath = Uri.parse(file.getPath());
+                    Intent openMuPDF = new Intent(FileBrowser.this, MuPDFActivity.class);
+                    openMuPDF.setAction(Intent.ACTION_VIEW);
+                    openMuPDF.setData(filePath);
+                    startActivity(openMuPDF);
+                }
+                //neither pdf file nor directory
+                else{
+                    new AlertDialog.Builder(FileBrowser.this)
+                            .setTitle("Not a pdf file")
+                            .setNeutralButton("OK", new DialogInterface.OnClickListener(){
+                                public void onClick(DialogInterface dialog, int button){
+                                    //do nothing
+                                }
+                            })
+                            .show();
+                }
+            }
+        }
+    }
 
+    //getting files from the passed path and storing in array list
     private void getFiles(File[] files){
         listItems = new ArrayList<String>();
-        listItems.add("..");
+        listItems.add("<-BACK");
         for(File file : files){
             // String state = Environment.getExternalStorageDirectory();
             String path=file.getPath();
@@ -69,28 +110,5 @@ public class FileBrowser extends ListActivity {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    protected void onListItemClick(ListView l, View v, int position, long id){
-        int selectedRow = (int)id;
-        if(selectedRow == 0){
-            //getFiles(new File("/storage").listFiles());
-            setRoot();
-        }else{
-            File file = new File(listItems.get(selectedRow));
-            if(file.isDirectory()){
-                getFiles(file.listFiles());
-            }else{
-                new AlertDialog.Builder(FileBrowser.this)
-                        .setTitle("This file is not a directory")
-                        .setNeutralButton("OK", new DialogInterface.OnClickListener(){
-                            public void onClick(DialogInterface dialog, int button){
-                                //do nothing
-                            }
-                        })
-                        .show();
-            }
-        }
     }
 }

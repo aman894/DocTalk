@@ -29,7 +29,7 @@
             android:layout_weight="1" />
 
         <android.support.design.widget.FloatingActionButton
-            android:elevation="4dp"
+            android:elevation="3dp"
             app:borderWidth="0dp"
             android:id="@+id/fabBrowse"
             android:src="@drawable/ic_folder_white"
