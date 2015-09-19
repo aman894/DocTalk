@@ -34,16 +34,16 @@ public class MuPDFCore
 	private native float getPageWidth();
 	private native float getPageHeight();
 	private native void drawPage(Bitmap bitmap,
-			int pageW, int pageH,
-			int patchX, int patchY,
-			int patchW, int patchH,
-			long cookiePtr);
+								 int pageW, int pageH,
+								 int patchX, int patchY,
+								 int patchW, int patchH,
+								 long cookiePtr);
 	private native void updatePageInternal(Bitmap bitmap,
-			int page,
-			int pageW, int pageH,
-			int patchX, int patchY,
-			int patchW, int patchH,
-			long cookiePtr);
+										   int page,
+										   int pageW, int pageH,
+										   int patchX, int patchY,
+										   int patchW, int patchH,
+										   long cookiePtr);
 	private native RectF[] searchPage(String text);
 	private native TextChar[][][][] text();
 	private native byte[] textAsHtml();
@@ -195,19 +195,19 @@ public class MuPDFCore
 	}
 
 	public synchronized void drawPage(Bitmap bm, int page,
-			int pageW, int pageH,
-			int patchX, int patchY,
-			int patchW, int patchH,
-			Cookie cookie) {
+									  int pageW, int pageH,
+									  int patchX, int patchY,
+									  int patchW, int patchH,
+									  Cookie cookie) {
 		gotoPage(page);
 		drawPage(bm, pageW, pageH, patchX, patchY, patchW, patchH, cookie.cookiePtr);
 	}
 
 	public synchronized void updatePage(Bitmap bm, int page,
-			int pageW, int pageH,
-			int patchX, int patchY,
-			int patchW, int patchH,
-			Cookie cookie) {
+										int pageW, int pageH,
+										int patchX, int patchY,
+										int patchW, int patchH,
+										Cookie cookie) {
 		updatePageInternal(bm, page, pageW, pageH, patchX, patchY, patchW, patchH, cookie.cookiePtr);
 	}
 
@@ -216,15 +216,15 @@ public class MuPDFCore
 
 		switch (WidgetType.values()[getFocusedWidgetTypeInternal()])
 		{
-		case TEXT:
-			return new PassClickResultText(changed, getFocusedWidgetTextInternal());
-		case LISTBOX:
-		case COMBOBOX:
-			return new PassClickResultChoice(changed, getFocusedWidgetChoiceOptions(), getFocusedWidgetChoiceSelected());
-		case SIGNATURE:
-			return new PassClickResultSignature(changed, getFocusedWidgetSignatureState());
-		default:
-			return new PassClickResult(changed);
+			case TEXT:
+				return new PassClickResultText(changed, getFocusedWidgetTextInternal());
+			case LISTBOX:
+			case COMBOBOX:
+				return new PassClickResultChoice(changed, getFocusedWidgetChoiceOptions(), getFocusedWidgetChoiceSelected());
+			case SIGNATURE:
+				return new PassClickResultSignature(changed, getFocusedWidgetSignatureState());
+			default:
+				return new PassClickResult(changed);
 		}
 
 	}

@@ -21,6 +21,7 @@ import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
@@ -33,6 +34,7 @@ import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ViewAnimator;
 
 class ThreadPerTaskExecutor implements Executor {
@@ -139,6 +141,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 						}
 					}
 				};
+
 				mAlertDialog = mAlertBuilder.create();
 				mAlertDialog.setTitle(result.title);
 				mAlertDialog.setMessage(result.message);
@@ -515,7 +518,6 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 
 		// React to interaction with the text widget
 		mSearchText.addTextChangedListener(new TextWatcher() {
-
 			public void afterTextChanged(Editable s) {
 				boolean haveText = s.toString().length() > 0;
 				setButtonEnabled(mSearchBack, haveText);
@@ -601,6 +603,25 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		layout.addView(mDocView);
 		layout.addView(mButtonsView);
 		setContentView(layout);
+
+
+		/*This is how you extract text from the pdf !!!!*/
+		/*---------------------------------------------------------------------------------*/
+		/*---------------------------------------------------------------------------------*/
+		/*---------------------------------------------------------------------------------*/
+		TextWord[][] textWord = core.textLines(15);
+		String word = textWord[0][0].w;
+		String word2 = textWord[0][1].w;
+		if(word!=null){
+			Toast.makeText(getBaseContext(),word,Toast.LENGTH_SHORT).show();
+			Log.w("text word",word+word2);
+		}
+		else Toast.makeText(getBaseContext(),"bad luck :(",Toast.LENGTH_SHORT).show();
+
+		/*------------------------------------------------------------------------------------*/
+		/*---------------------------------------------------------------------------------*/
+		/*---------------------------------------------------------------------------------*/
+
 	}
 
 	@Override
