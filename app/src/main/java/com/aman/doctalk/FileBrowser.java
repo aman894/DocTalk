@@ -22,7 +22,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 public class FileBrowser extends ListActivity {
-    ArrayList<String> listItems;
+    ArrayList<String> listItems,listshow;
     String ROOT_PATH1 = "/storage/emulated/0";
     String ROOT_PATH2 = "/storage/sdcard1";
     String parent="";
@@ -35,10 +35,16 @@ public class FileBrowser extends ListActivity {
 
     private void setRoot() {
         listItems = new ArrayList<String>();
+        listshow = new ArrayList<String>();
+
         listItems.add("<-BACK");
         listItems.add(ROOT_PATH1);
         listItems.add(ROOT_PATH2);
-        ArrayAdapter<String> fileList = new ArrayAdapter<String>(this,R.layout.file_list_row, listItems);
+        listshow.add("<-");
+        listshow.add("Internal Storage");
+        listshow.add("SD Card");
+
+        ArrayAdapter<String> fileList = new ArrayAdapter<String>(this,R.layout.file_list_row, listshow);
         setListAdapter(fileList);
     }
     //on clicking any item in the dialog
@@ -80,14 +86,27 @@ public class FileBrowser extends ListActivity {
     private void getFiles(File[] files){
         listItems = new ArrayList<String>();
         listItems.add("<-BACK");
-        for(File file : files){
-            // String state = Environment.getExternalStorageDirectory();
-            String path=file.getPath();
-            if((path.contains("storage"))&&(!path.contains("usbdisk")))
-                listItems.add(file.getPath());
+        listshow = new ArrayList<String>();
+        listshow.add("<-");
 
+        String path,s="";
+        for(File file : files) {
+            // String state = Environment.getExternalStorageDirectory();
+            path = file.getPath();
+            if ((path.contains("storage")) && (!path.contains("usbdisk"))) {
+                listItems.add(file.getPath());
+                path=file.getPath();
+                int l=path.length();
+                char c=path.charAt(l-1);
+                for(int i=(l-2);c!='/' || i>=0 ;i--)
+                {
+                    s=c+s;
+                }
+
+            listshow.add(s);
+            }
         }
-        ArrayAdapter<String> fileList = new ArrayAdapter<String>(this,R.layout.file_list_row, listItems);
+        ArrayAdapter<String> fileList = new ArrayAdapter<String>(this,R.layout.file_list_row, listshow);
         setListAdapter(fileList);
     }
     @Override
