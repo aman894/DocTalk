@@ -6,6 +6,7 @@ import android.app.Notification;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -15,10 +16,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.artifex.mupdfdemo.MuPDFActivity;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class FileBrowser extends ListActivity {
@@ -35,11 +38,10 @@ public class FileBrowser extends ListActivity {
 
     private void setRoot() {
         listItems = new ArrayList<String>();
-        listshow = new ArrayList<String>();
-
         listItems.add("<-BACK");
         listItems.add(ROOT_PATH1);
         listItems.add(ROOT_PATH2);
+        listshow = new ArrayList<String>();
         listshow.add("<-");
         listshow.add("Internal Storage");
         listshow.add("SD Card");
@@ -56,17 +58,33 @@ public class FileBrowser extends ListActivity {
             setRoot();
         }else{
             File file = new File(listItems.get(selectedRow));
+
             if(file.isDirectory()){
                 getFiles(file.listFiles());
-            }else{
+            }else {
                 //opening  pdf files
-                if(file.getPath().matches(".*?\\.pdf")){
-                    Uri filePath = Uri.parse(file.getPath());
-                    Intent openMuPDF = new Intent(FileBrowser.this, MuPDFActivity.class);
-                    openMuPDF.setAction(Intent.ACTION_VIEW);
-                    openMuPDF.setData(filePath);
-                    startActivity(openMuPDF);
-                }
+                    if (file.getPath().matches(".*?\\.pdf")) {
+                        try {
+                            Uri filePath = Uri.parse(file.getPath());
+                            Intent openMuPDF = new Intent(FileBrowser.this, MuPDFActivity.class);
+                            openMuPDF.setAction(Intent.ACTION_VIEW);
+                            openMuPDF.setData(filePath);
+                           /* if (Build.VERSION.SDK_INT >= 16) {
+                                Bundle extras = openMuPDF.getExtras();
+                                extras.putInt("key_page_index", 1);
+                                startActivity(openMuPDF,extras);
+                            }
+                            else
+                            {*/
+                                startActivity(openMuPDF);
+                           // }
+
+                        }
+                        catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+
                 //neither pdf file nor directory
                 else{
                     new AlertDialog.Builder(FileBrowser.this)
@@ -85,26 +103,28 @@ public class FileBrowser extends ListActivity {
     //getting files from the passed path and storing in array list
     private void getFiles(File[] files){
         listItems = new ArrayList<String>();
-        listItems.add("<-BACK");
+        listItems.add("<-");
         listshow = new ArrayList<String>();
         listshow.add("<-");
 
-        String path,s="";
+
         for(File file : files) {
-            // String state = Environment.getExternalStorageDirectory();
+            String path,s="";
             path = file.getPath();
             if ((path.contains("storage")) && (!path.contains("usbdisk"))) {
                 listItems.add(file.getPath());
                 path=file.getPath();
-                int l=path.length();
-                char c=path.charAt(l-1);
-                for(int i=(l-2);c!='/' || i>=0 ;i--)
+                 int l=path.length();
+                 char c=path.charAt(l-1);
+                for(int i=(l-2);c!='/' ;i--)
                 {
                     s=c+s;
+                    c=path.charAt(i);
+
                 }
 
             listshow.add(s);
-            }
+               }
         }
         ArrayAdapter<String> fileList = new ArrayAdapter<String>(this,R.layout.file_list_row, listshow);
         setListAdapter(fileList);

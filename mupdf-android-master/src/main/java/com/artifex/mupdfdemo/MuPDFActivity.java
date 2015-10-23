@@ -1,6 +1,7 @@
 package com.artifex.mupdfdemo;
 
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.concurrent.Executor;
 
@@ -8,6 +9,7 @@ import com.artifex.mupdfdemo.ReaderView.ViewMapper;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
@@ -16,10 +18,15 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.PasswordTransformationMethod;
@@ -31,35 +38,37 @@ import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 import android.widget.ViewAnimator;
 
-class ThreadPerTaskExecutor implements Executor {
+class  ThreadPerTaskExecutor implements Executor {
     public void execute(Runnable r) {
         new Thread(r).start();
     }
 }
 
-public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupport,
-		TextToSpeech.OnInitListener
+public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupport, TextToSpeech.OnInitListener
 {
-	private int pageNumber;
-
-	public void setPageNumber(int pageNumber) {
+    private int pageNumber;
+   ToggleButton  tg;
+    String word=" ";
+    static boolean play=false;
+    public void setPageNumber(int pageNumber) {
 		this.pageNumber = pageNumber;
 	}
-
-	@Override
+    @Override
 	public void onInit(int status) {
-		if(status == TextToSpeech.SUCCESS){
-			myTTS.setLanguage(Locale.ENGLISH);
-		}
-		else if(status == TextToSpeech.ERROR){
+        if(status == TextToSpeech.SUCCESS) {
+            myTTS.setLanguage(Locale.UK);
+        }
+        else if(status == TextToSpeech.ERROR){
 			Toast.makeText(this,"Could not speak!",Toast.LENGTH_SHORT).show();
 		}
 	}
@@ -106,6 +115,12 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 	private FilePicker mFilePicker;
 	//Cache c = new Cache();
 	private TextToSpeech myTTS;
+    private int mStatus=0;
+    private MediaPlayer mMediaPlayer;
+    private boolean mProcessed=false;
+    private final String FILENAME="/wpta_tts.wav";
+    TextView etContent;
+   // private ProgressDialog mProgressDialog;
 	private final int MY_DATA_CHECK_CODE = 0;
 
 	public void createAlertWaiter() {
@@ -265,12 +280,17 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		return core;
 	}
 
-	/** Called when the activity is first created. */
-	@Override
-	public void onCreate(Bundle savedInstanceState)
+
+    public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		mAlertBuilder = new AlertDialog.Builder(this);
+		myTTS = new TextToSpeech(this, this);
+
+
+        // Getting reference to the button btn_speek
+		tg=(ToggleButton)findViewById(R.id.speak);
+
+    mAlertBuilder = new AlertDialog.Builder(this);
 
 		if (core == null) {
 			core = (MuPDFCore)getLastNonConfigurationInstance();
@@ -359,18 +379,18 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 			AlertDialog alert = mAlertBuilder.create();
 			alert.setTitle(R.string.cannot_open_document);
 			alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.dismiss),
-					new DialogInterface.OnClickListener() {
-						public void onClick(DialogInterface dialog, int which) {
-							finish();
-						}
-					});
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            finish();
+                        }
+                    });
 			alert.setOnCancelListener(new OnCancelListener() {
 
-				@Override
-				public void onCancel(DialogInterface dialog) {
-					finish();
-				}
-			});
+                @Override
+                public void onCancel(DialogInterface dialog) {
+                    finish();
+                }
+            });
 			alert.show();
 			return;
 		}
@@ -387,15 +407,15 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		alert.setTitle(R.string.enter_password);
 		alert.setView(mPasswordView);
 		alert.setButton(AlertDialog.BUTTON_POSITIVE, getString(R.string.okay),
-				new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int which) {
-				if (core.authenticatePassword(mPasswordView.getText().toString())) {
-					createUI(savedInstanceState);
-				} else {
-					requestPassword(savedInstanceState);
-				}
-			}
-		});
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (core.authenticatePassword(mPasswordView.getText().toString())) {
+                            createUI(savedInstanceState);
+                        } else {
+                            requestPassword(savedInstanceState);
+                        }
+                    }
+                });
 		alert.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.cancel),
 				new DialogInterface.OnClickListener() {
 
@@ -405,9 +425,18 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 				});
 		alert.show();
 	}
-	private void speakWords(String wordToSpeak){
-		myTTS.speak(wordToSpeak, TextToSpeech.QUEUE_FLUSH, null);
-	}
+	private void speakWords() {
+        TextWord[][] textWord = core.textLines(pageNumber);
+        int i, j;
+        String word = "";
+        for (i = 0; i < textWord.length; i++) {
+            for (j = 0; j < textWord[i].length; j++) {
+                word = word + textWord[i][j].w + " ";
+            }
+        }
+                myTTS.speak(word, TextToSpeech.QUEUE_FLUSH, null);
+    }
+
 	public void createUI(Bundle savedInstanceState) {
 		if (core == null)
 			return;
@@ -418,8 +447,9 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 			protected void onMoveToChild(int i) {
 				if (core == null)
 					return;
+
 				setPageNumber(i);
-				mPageNumberView.setText(String.format("%d / %d", i + 1,
+				mPageNumberView.setText(String.format("%d / %d", i+1 ,
 						core.countPages()));
 				mPageSlider.setMax((core.countPages() - 1) * mPageSliderRes);
 				mPageSlider.setProgress(i * mPageSliderRes);
@@ -627,15 +657,17 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		layout.addView(mButtonsView);
 		setContentView(layout);
 
-		Intent checkTTSIntent = new Intent();
-		checkTTSIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
-		startActivityForResult(checkTTSIntent, MY_DATA_CHECK_CODE);
+
+        Intent checkTTSIntent = new Intent();
+        checkTTSIntent.setAction(TextToSpeech.Engine.ACTION_CHECK_TTS_DATA);
+        startActivityForResult(checkTTSIntent, MY_DATA_CHECK_CODE);
+
 
 		/*This is how you extract text from the pdf !!!!*/
 		/*---------------------------------------------------------------------------------*/
 		/*---------------------------------------------------------------------------------*/
 		/*---------------------------------------------------------------------------------*/
-		TextWord[][] textWord = core.textLines(pageNumber);
+		/*TextWord[][] textWord = core.textLines(pageNumber);
 		int i,j;
 		String word = "";
 		for(i=0;i<textWord.length;i++){
@@ -644,11 +676,11 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 			}
 		}
 		if(word!=null){
-			speakWords(word);
+			//speakWords(word);
 			Toast.makeText(getBaseContext(),word,Toast.LENGTH_SHORT).show();
 			Log.w("text word",word);
 		}
-		else Toast.makeText(getBaseContext(),"bad luck :(",Toast.LENGTH_SHORT).show();
+		else Toast.makeText(getBaseContext(),"bad luck :(",Toast.LENGTH_SHORT).show();*/
 
 		/*------------------------------------------------------------------------------------*/
 		/*---------------------------------------------------------------------------------*/
@@ -664,7 +696,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 				mDocView.setDisplayedViewIndex(resultCode);
 
 			if(resultCode==TextToSpeech.Engine.CHECK_VOICE_DATA_PASS){
-				myTTS = new TextToSpeech(this,this);
+				//setTts(myTTS);
 			}
 			else{
 				Intent installTTSIntent = new Intent();
@@ -724,7 +756,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 			SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
 			SharedPreferences.Editor edit = prefs.edit();
 			edit.putInt("page"+mFileName, mDocView.getDisplayedViewIndex());
-			edit.commit();
+            edit.commit();
 		}
 
 		if (!mButtonsVisible)
@@ -768,12 +800,18 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 			mAlertTask = null;
 		}
 		core = null;
+        mMediaPlayer.stop();
+
+        // Release the MediaPlayer
+        mMediaPlayer.release();
+        myTTS.stop();
+        myTTS.shutdown();
 		super.onDestroy();
 	}
 
 	private void setButtonEnabled(ImageButton button, boolean enabled) {
 		button.setEnabled(enabled);
-		button.setColorFilter(enabled ? Color.argb(255, 255, 255, 255):Color.argb(255, 128, 128, 128));
+		button.setColorFilter(enabled ? Color.argb(255, 255, 255, 255) : Color.argb(255, 128, 128, 128));
 	}
 
 	private void setLinkHighlight(boolean highlight) {
@@ -813,14 +851,17 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 			anim = new TranslateAnimation(0, 0, mPageSlider.getHeight(), 0);
 			anim.setDuration(200);
 			anim.setAnimationListener(new Animation.AnimationListener() {
-				public void onAnimationStart(Animation animation) {
-					mPageSlider.setVisibility(View.VISIBLE);
-				}
-				public void onAnimationRepeat(Animation animation) {}
-				public void onAnimationEnd(Animation animation) {
-					mPageNumberView.setVisibility(View.VISIBLE);
-				}
-			});
+                public void onAnimationStart(Animation animation) {
+                    mPageSlider.setVisibility(View.VISIBLE);
+                }
+
+                public void onAnimationRepeat(Animation animation) {
+                }
+
+                public void onAnimationEnd(Animation animation) {
+                    mPageNumberView.setVisibility(View.VISIBLE);
+                }
+            });
 			mPageSlider.startAnimation(anim);
 		}
 	}
@@ -1185,11 +1226,19 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 		}
 	}
 
-	@Override
+   public void speakout(View view) {
+       play = ((ToggleButton) view).isChecked();
+       if(play==true)
+           speakWords();
+       else
+          myTTS.stop();
+    }
+    @Override
 	public void performPickFor(FilePicker picker) {
 		mFilePicker = picker;
 		Intent intent = new Intent(this, ChoosePDFActivity.class);
 		intent.setAction(ChoosePDFActivity.PICK_KEY_FILE);
 		startActivityForResult(intent, FILEPICK_REQUEST);
 	}
+
 }
