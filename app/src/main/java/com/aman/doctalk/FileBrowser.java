@@ -1,5 +1,6 @@
 package com.aman.doctalk;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.Notification;
@@ -8,12 +9,16 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -23,12 +28,15 @@ import com.artifex.mupdfdemo.MuPDFActivity;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
-public class FileBrowser extends ListActivity {
+public class FileBrowser extends Activity implements AdapterView.OnItemClickListener{
     ArrayList<String> listItems,listshow;
     String ROOT_PATH1 = "/storage/emulated/0";
     String ROOT_PATH2 = "/storage/sdcard1";
-    String parent="";
+    private ListView listView1;
+    List<list> rowitems;
+    static int k=0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,17 +49,23 @@ public class FileBrowser extends ListActivity {
         listItems.add("<-BACK");
         listItems.add(ROOT_PATH1);
         listItems.add(ROOT_PATH2);
-        listshow = new ArrayList<String>();
-        listshow.add("<-");
-        listshow.add("Internal Storage");
-        listshow.add("SD Card");
+         String[] titles=new String[]{"","Internal storage","SD Card"};
+         Integer[] images={R.drawable.back,R.drawable.file,R.drawable.file};
 
-        ArrayAdapter<String> fileList = new ArrayAdapter<String>(this,R.layout.file_list_row, listshow);
-        setListAdapter(fileList);
+        rowitems = new ArrayList<list>();
+        for (int i = 0; i < titles.length; i++) {
+            list item = new list(images[i], titles[i]);
+            rowitems.add(item);
+        }
+
+        listView1 = (ListView) findViewById(R.id.list);
+        listAdapter adapter = new listAdapter(this,
+                R.layout.file_list_row, rowitems);
+        listView1.setAdapter(adapter);
+        listView1.setOnItemClickListener(this);
     }
-    //on clicking any item in the dialog
-    @Override
-    protected void onListItemClick(ListView l, View v, int position, long id){
+    public void onItemClick(AdapterView<?> parent, View view, int position,
+                            long id) {
         int selectedRow = (int)id;
 
         if(selectedRow == 0){
@@ -60,30 +74,24 @@ public class FileBrowser extends ListActivity {
             File file = new File(listItems.get(selectedRow));
 
             if(file.isDirectory()){
+                k=0;
                 getFiles(file.listFiles());
             }else {
                 //opening  pdf files
-                    if (file.getPath().matches(".*?\\.pdf")) {
-                        try {
-                            Uri filePath = Uri.parse(file.getPath());
-                            Intent openMuPDF = new Intent(FileBrowser.this, MuPDFActivity.class);
-                            openMuPDF.setAction(Intent.ACTION_VIEW);
-                            openMuPDF.setData(filePath);
-                           /* if (Build.VERSION.SDK_INT >= 16) {
-                                Bundle extras = openMuPDF.getExtras();
-                                extras.putInt("key_page_index", 1);
-                                startActivity(openMuPDF,extras);
-                            }
-                            else
-                            {*/
-                                startActivity(openMuPDF);
-                           // }
-
-                        }
-                        catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                if (file.getPath().matches(".*?\\.pdf")) {
+                    try {
+                        Uri filePath = Uri.parse(file.getPath());
+                        Intent openMuPDF = new Intent(FileBrowser.this, MuPDFActivity.class);
+                        openMuPDF.setAction(Intent.ACTION_VIEW);
+                        openMuPDF.setData(filePath);
+                        startActivity(openMuPDF);
                     }
+
+
+                    catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
 
                 //neither pdf file nor directory
                 else{
@@ -98,14 +106,15 @@ public class FileBrowser extends ListActivity {
                 }
             }
         }
-    }
 
+
+    }
     //getting files from the passed path and storing in array list
     private void getFiles(File[] files){
         listItems = new ArrayList<String>();
         listItems.add("<-");
         listshow = new ArrayList<String>();
-        listshow.add("<-");
+        listshow.add(" ");
 
 
         for(File file : files) {
@@ -122,13 +131,39 @@ public class FileBrowser extends ListActivity {
                     c=path.charAt(i);
 
                 }
-
-            listshow.add(s);
+                k++;
+                listshow.add(s);
                }
         }
-        ArrayAdapter<String> fileList = new ArrayAdapter<String>(this,R.layout.file_list_row, listshow);
-        setListAdapter(fileList);
+        String[] titles=new String[k];
+        Integer[] images=new Integer[k];
+        for(int i=0;i<k;i++)
+        {
+            titles[i]=listshow.get(i);
+            if(listshow.get(i)==" ")
+                images[i]=R.drawable.back;
+            else if(listshow.get(i).contains(".pdf"))
+                images[i]=R.drawable.pdf;
+            else
+                images[i]=R.drawable.file;
+        }
+        rowitems = new ArrayList<list>();
+        for (int i = 0; i < titles.length; i++) {
+            list item = new list(images[i], titles[i]);
+            rowitems.add(item);
+        }
+
+        listView1 = (ListView) findViewById(R.id.list);
+        listAdapter adapter = new listAdapter(this,
+                R.layout.file_list_row, rowitems);
+        listView1.setAdapter(adapter);
+        listView1.setOnItemClickListener(this);
     }
+
+
+
+
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
