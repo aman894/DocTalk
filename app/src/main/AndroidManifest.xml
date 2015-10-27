@@ -18,8 +18,7 @@
         </activity>
         <activity
             android:theme="@style/Theme.AppCompat.Light.Dialog"
-            android:name=".FileBrowser"
-            android:label="@string/title_activity_file_browser" >
+            android:name=".FileBrowser">
         </activity>
     </application>
 

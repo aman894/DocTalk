@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Material Design</string>
+    <string name="app_name">Doc Talk</string>
     <string name="action_settings">Settings</string>
     <string name="action_search">Search</string>
     <string name="drawer_open">Open</string>
@@ -23,7 +23,7 @@
     <string name="title_messages">Messages</string>
     <string name="title_friends">Friends</string>
     <string name="title_home">Home</string>
-    <string name="title_activity_file_browser">FileBrowser</string>
+    <!--string name="title_activity_file_browser">FileBrowse</string-->
 
     <string name="hello_world">Hello world!</string>>
 </resources>
