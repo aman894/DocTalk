@@ -1,5 +1,6 @@
 package com.artifex.mupdfdemo;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Locale;
@@ -105,10 +106,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
     private MediaPlayer mMediaPlayer;
     private boolean mProcessed=false;
     private final String FILENAME="/wpta_tts.wav";
-    TextView text;
-   // private SpeechRecognizer sr;
-   // private ProgressDialog mProgressDialog;
-	private final int MY_DATA_CHECK_CODE = 0;
+    private final int MY_DATA_CHECK_CODE = 0;
 
 	public void createAlertWaiter() {
 		mAlertsActive = true;
@@ -489,10 +487,23 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 			}
 
 			@Override
-			protected void onDocMotion() {
+			protected void onDocMotion()  {
 				hideButtons();
                 playMediaPlayer(1);
-				 }
+                word="";
+				mMediaPlayer.reset();
+                HashMap<String, String> myHashRender = new HashMap();
+                String utteranceID = "wpta";
+                myHashRender.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceID);
+
+                String fileName = Environment.getExternalStorageDirectory().getAbsolutePath() + FILENAME;
+
+                    int status = myTTS.synthesizeToFile(word, myHashRender, fileName);
+                    initializeMediaPlayer();
+
+
+
+                }
 
 			@Override
 			protected void onHit(Hit item) {
@@ -703,8 +714,9 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
        tg.setOnClickListener(new View.OnClickListener() {
            public void onClick(View v) {
                // Perform action on click
-                  if (mStatus == TextToSpeech.SUCCESS) {
-                   extracttext();
+               extracttext();
+
+               if (mStatus == TextToSpeech.SUCCESS) {
 
                    if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
                        playMediaPlayer(1);
@@ -719,6 +731,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 
                    if (!mProcessed) {
                        int status = myTTS.synthesizeToFile(word, myHashRender, fileName);
+                       word="";
                    } else {
                        playMediaPlayer(0);
                    }
@@ -1246,6 +1259,7 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 
 	@Override
 	public void onBackPressed() {
+        word="";
 		if (core != null && core.hasChanges()) {
 			DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int which) {
@@ -1302,13 +1316,14 @@ public class MuPDFActivity extends Activity implements FilePicker.FilePickerSupp
 	}
 public void extracttext()
 {
-    TextWord[][] textWord = core.textLines(pg);
-    int z, j;
+    TextWord[][] textWord = core.textLines(mDocView.getDisplayedViewIndex());
+     int z, j;
 
     for (z = 0; z < textWord.length; z++) {
         for (j = 0; j < textWord[z].length; j++) {
             word = word + textWord[z][j].w + " ";
         }
     }
+    Toast.makeText(getBaseContext(),word,Toast.LENGTH_SHORT).show();
 }
 }

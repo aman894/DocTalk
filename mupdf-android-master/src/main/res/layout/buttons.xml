@@ -3,6 +3,17 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="match_parent"
 	android:layout_height="match_parent" >
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#FFFFFF"
+        android:id="@+id/speak"
+        android:onClick="speakout"
+        android:layout_alignParentBottom="true"
+        android:layout_marginLeft="5dp"
+        android:layout_marginBottom="5dp"
+		android:layout_alignTop="@+id/lowerButtons"
+        />
 
 	<ViewAnimator
 		android:id="@+id/switcher"
@@ -80,14 +91,6 @@
 				android:background="@drawable/button"
 				android:onClick="OnMoreButtonClick"
 				android:src="@drawable/ic_more" />
-			<Button
-                android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:textColor="#FFFFFF"
-				android:id="@+id/speak"
-				android:layout_gravity="right"
-                android:onClick="speakout"
-				/>
 
 
 		</RelativeLayout>
